@@ -1,24 +1,43 @@
+import { shallow, mount } from 'enzyme';
 import React from 'react';
-import Header from './Header';
-import { shallow } from 'enzyme';
+import { Header } from './Header';
+import { StyleSheetTestUtils } from 'aphrodite';
+import AppContext, { user, logOut } from '../App/AppContext';
 
-
+const USER = { email: 'michael@mifflin.com', password: 'pippity' };
 
 describe('<Header />', () => {
-    it('Header renders without crashing', () => {
-        const wrapper = shallow(<Header />);
-        expect(wrapper).toBeDefined();
-    });
+	beforeAll(() => {
+		StyleSheetTestUtils.suppressStyleInjection();
+	});
+	afterAll(() => {
+		StyleSheetTestUtils.clearBufferAndResumeStyleInjection();
+	});
 
-    it('Header renders img', () => {
-        const wrapper = shallow(<Header />);
-        const element = wrapper.find('img').hasClass('App-logo');
-        expect(element).toBe(true);
-    });
+	it('Header renders without crashing', () => {
+		const wrapper = shallow(<Header />);
+		expect(wrapper.exists()).toEqual(true);
+	});
+	it('verifies that the components render img', () => {
+		const wrapper = shallow(<Header user={USER} />);
+		wrapper.update();
+		expect(wrapper.find('div img')).toHaveLength(1);
+	});
+	it('verifies that the components render h1', () => {
+		const wrapper = shallow(<Header user={USER} />);
+		wrapper.update();
+		expect(wrapper.find('div h1')).toHaveLength(1);
+	});
 
-    it('Header renders h1', () => {
-        const wrapper = shallow(<Header />);
-        const element = wrapper.find('h1').text();
-        expect(element).toEqual('School dashboard');
-    });
-})
+	it('mounts the Header component with a default context value. The logoutSection is not created', () => {
+		const wrapper = shallow(<Header />);
+
+		expect(wrapper.find('#logoutSection')).toHaveLength(0);
+	});
+
+	it('mounts the Header component with a user defined (isLoggedIn is true and an email is set). The logoutSection is created', () => {
+		const wrapper = shallow(<Header user={USER} />);
+
+		expect(wrapper.find('#logoutSection')).toHaveLength(1);
+	});
+});
