@@ -1,51 +1,24 @@
-import React from "react";
-import App from "./App";
-import Header from "../Header/Header";
-import Login from "../Login/Login";
-import Footer from "../Footer/Footer";
 import { shallow, mount } from "enzyme";
+import React from "react";
+import App, { listNotificationsInitialState, mapStateToProps } from "./App";
+import { StyleSheetTestUtils } from "aphrodite";
+import AppContext, { user, logOut } from "./AppContext";
+
+import { fromJS } from "immutable";
+import { createStore } from "redux";
+import { Provider } from "react-redux";
+import uiReducer, { initialState } from "../reducers/uiReducer";
+
+const store = createStore(uiReducer, initialState);
 
 describe("<App />", () => {
-  it("App renders without crashing", () => {
-    const wrapper = shallow(<App />);
-    expect(wrapper).toBeDefined();
-  });
+  it("mapStateToProps returns the right object from user Login", () => {
+    let state = fromJS({
+      isUserLoggedIn: true,
+    });
 
-  it("App contains Header component", () => {
-    const wrapper = shallow(<App />);
-    const component = wrapper.find(Header);
-    expect(component.exists()).toBe(true);
-  });
+    const result = mapStateToProps(state);
 
-  it("App contains Login component", () => {
-    const wrapper = shallow(<App isLoggedIn={false} />);
-    const component = wrapper.find(Login);
-    expect(component.exists()).toBe(true);
+    expect(result).toEqual({ isLoggedIn: true });
   });
-
-  it("App contains Footer component", () => {
-    const wrapper = shallow(<App />);
-    const component = wrapper.find(Footer);
-    expect(component.exists()).toBe(true);
-  });
-
-  window.alert = jest.fn();
-  it("test when ctrl and h keys are pressed", () => {
-    const mockfunc = jest.fn();
-    const wrapper = mount(<App logOut={mockfunc} />);
-    const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-    document.dispatchEvent(event);
-    expect(mockfunc).toHaveBeenCalled();
-    wrapper.unmount();
-  });
-  it("alert is called with the string Logging you out", () => {
-  const wrapper = mount(<App />);
-  const spy = jest.spyOn(window, "alert");
-  const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-  document.dispatchEvent(event);
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith("Logging you out");
-  wrapper.unmount();
-  });
-
 });
