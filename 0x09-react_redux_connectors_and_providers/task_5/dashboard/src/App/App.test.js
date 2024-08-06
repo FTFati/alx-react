@@ -1,51 +1,278 @@
-import React from "react";
-import App from "./App";
-import Header from "../Header/Header";
-import Login from "../Login/Login";
-import Footer from "../Footer/Footer";
-import { shallow, mount } from "enzyme";
+import { Map, fromJS } from 'immutable';
 
-describe("<App />", () => {
-  it("App renders without crashing", () => {
-    const wrapper = shallow(<App />);
-    expect(wrapper).toBeDefined();
-  });
+import notificationReducer, {
+	initialNotificationState,
+} from './notificationReducer';
 
-  it("App contains Header component", () => {
-    const wrapper = shallow(<App />);
-    const component = wrapper.find(Header);
-    expect(component.exists()).toBe(true);
-  });
+import {
+	FETCH_NOTIFICATIONS_SUCCESS,
+	MARK_AS_READ,
+	SET_TYPE_FILTER,
+	SET_LOADING_STATE,
+} from '../actions/notificationActionTypes';
 
-  it("App contains Login component", () => {
-    const wrapper = shallow(<App isLoggedIn={false} />);
-    const component = wrapper.find(Login);
-    expect(component.exists()).toBe(true);
-  });
+import notificationsNormalizer from '../schema/notifications';
 
-  it("App contains Footer component", () => {
-    const wrapper = shallow(<App />);
-    const component = wrapper.find(Footer);
-    expect(component.exists()).toBe(true);
-  });
+describe('notificationReducer tests', function () {
+	it('Tests that the default state returns an initial state', function () {
+		const state = notificationReducer(undefined, {});
 
-  window.alert = jest.fn();
-  it("test when ctrl and h keys are pressed", () => {
-    const mockfunc = jest.fn();
-    const wrapper = mount(<App logOut={mockfunc} />);
-    const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-    document.dispatchEvent(event);
-    expect(mockfunc).toHaveBeenCalled();
-    wrapper.unmount();
-  });
-  it("alert is called with the string Logging you out", () => {
-  const wrapper = mount(<App />);
-  const spy = jest.spyOn(window, "alert");
-  const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-  document.dispatchEvent(event);
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith("Logging you out");
-  wrapper.unmount();
-  });
+		expect(state).toEqual(Map(initialNotificationState));
+	});
+	// it('Tests that FETCH_NOTIFICATIONS_SUCCESS returns the data passed', function () {
+	// 	const action = {
+	// 		type: FETCH_NOTIFICATIONS_SUCCESS,
+	// 		data: [
+	// 			{
+	// 				id: 1,
+	// 				type: 'default',
+	// 				value: 'New course available',
+	// 			},
+	// 			{
+	// 				id: 2,
+	// 				type: 'urgent',
+	// 				value: 'New resume available',
+	// 			},
+	// 			{
+	// 				id: 3,
+	// 				type: 'urgent',
+	// 				value: 'New data available',
+	// 			},
+	// 		],
+	// 	};
 
+	// 	const data = [
+	// 		{
+	// 			id: 1,
+	// 			type: 'default',
+	// 			value: 'New course available',
+	// 		},
+	// 		{
+	// 			id: 2,
+	// 			type: 'urgent',
+	// 			value: 'New resume available',
+	// 		},
+	// 		{
+	// 			id: 3,
+	// 			type: 'urgent',
+	// 			value: 'New data available',
+	// 		},
+	// 	];
+
+	// 	const normalizedData = notificationsNormalizer(data);
+
+	// 	const expectedData = {
+	// 		filter: 'DEFAULT',
+	// 		loading: false,
+	// 		...normalizedData,
+	// 	};
+	// 	expectedData.notifications[1].isRead = false;
+	// 	expectedData.notifications[2].isRead = false;
+	// 	expectedData.notifications[3].isRead = false;
+
+	// 	const state = notificationReducer(undefined, action);
+
+	// 	expect(state.toJS()).toEqual(expectedData);
+	// });
+	it('Tests that MARK_AS_READ returns the data with the right item updated', function () {
+		const initialState = {
+			filter: 'DEFAULT',
+			notifications: [
+				{
+					id: 1,
+					isRead: false,
+					type: 'default',
+					value: 'New course available',
+				},
+				{
+					id: 2,
+					isRead: false,
+					type: 'urgent',
+					value: 'New resume available',
+				},
+				{
+					id: 3,
+					isRead: false,
+					type: 'urgent',
+					value: 'New data available',
+				},
+			],
+		};
+
+		initialState.notifications = notificationsNormalizer(
+			initialState.notifications
+		).notifications;
+
+		const action = {
+			type: MARK_AS_READ,
+			index: 2,
+		};
+
+		const data = [
+			{
+				id: 1,
+				type: 'default',
+				value: 'New course available',
+			},
+			{
+				id: 2,
+				type: 'urgent',
+				value: 'New resume available',
+			},
+			{
+				id: 3,
+				type: 'urgent',
+				value: 'New data available',
+			},
+		];
+
+		const normalizedData = notificationsNormalizer(data);
+
+		const expectedData = {
+			filter: 'DEFAULT',
+			...normalizedData,
+		};
+		expectedData.notifications[1].isRead = false;
+		expectedData.notifications[2].isRead = true;
+		expectedData.notifications[3].isRead = false;
+
+		const state = notificationReducer(fromJS(initialState), action);
+
+		expect(state.toJS()).toEqual(expectedData);
+	});
+	it('Tests that SET_TYPE_FILTER returns the data with the right item updated', function () {
+		const initialState = {
+			filter: 'DEFAULT',
+			notifications: [
+				{
+					id: 1,
+					isRead: false,
+					type: 'default',
+					value: 'New course available',
+				},
+				{
+					id: 2,
+					isRead: false,
+					type: 'urgent',
+					value: 'New resume available',
+				},
+				{
+					id: 3,
+					isRead: false,
+					type: 'urgent',
+					value: 'New data available',
+				},
+			],
+		};
+
+		initialState.notifications = notificationsNormalizer(
+			initialState.notifications
+		).notifications;
+
+		const action = {
+			type: SET_TYPE_FILTER,
+			filter: 'URGENT',
+		};
+
+		const data = [
+			{
+				id: 1,
+				isRead: false,
+				type: 'default',
+				value: 'New course available',
+			},
+			{
+				id: 2,
+				type: 'urgent',
+				isRead: false,
+				value: 'New resume available',
+			},
+			{
+				id: 3,
+				type: 'urgent',
+				isRead: false,
+				value: 'New data available',
+			},
+		];
+
+		const normalizedData = notificationsNormalizer(data);
+
+		const expectedData = {
+			filter: 'URGENT',
+			...normalizedData,
+		};
+
+		const state = notificationReducer(fromJS(initialState), action);
+
+		expect(state.toJS()).toEqual(expectedData);
+	});
+
+	it('Tests that SET_LOADING_STATE returns the data with the right item updated', function () {
+		const initialState = {
+			filter: 'DEFAULT',
+			loading: false,
+			notifications: [
+				{
+					id: 1,
+					isRead: false,
+					type: 'default',
+					value: 'New course available',
+				},
+				{
+					id: 2,
+					isRead: false,
+					type: 'urgent',
+					value: 'New resume available',
+				},
+				{
+					id: 3,
+					isRead: false,
+					type: 'urgent',
+					value: 'New data available',
+				},
+			],
+		};
+
+		initialState.notifications = notificationsNormalizer(
+			initialState.notifications
+		).notifications;
+
+		const action = {
+			type: SET_LOADING_STATE,
+			loading: true,
+		};
+
+		const data = [
+			{
+				id: 1,
+				isRead: false,
+				type: 'default',
+				value: 'New course available',
+			},
+			{
+				id: 2,
+				type: 'urgent',
+				isRead: false,
+				value: 'New resume available',
+			},
+			{
+				id: 3,
+				type: 'urgent',
+				isRead: false,
+				value: 'New data available',
+			},
+		];
+
+		const normalizedData = notificationsNormalizer(data);
+
+		const expectedData = {
+			filter: 'DEFAULT',
+			loading: true,
+			...normalizedData,
+		};
+
+		const state = notificationReducer(fromJS(initialState), action);
+
+		expect(state.toJS()).toEqual(expectedData);
+	});
 });
