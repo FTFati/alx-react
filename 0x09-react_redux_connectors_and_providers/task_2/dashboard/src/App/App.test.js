@@ -1,51 +1,96 @@
-import React from "react";
-import App from "./App";
-import Header from "../Header/Header";
-import Login from "../Login/Login";
-import Footer from "../Footer/Footer";
 import { shallow, mount } from "enzyme";
+import React from "react";
+import { App, listNotificationsInitialState, mapStateToProps } from "./App";
+import { StyleSheetTestUtils } from "aphrodite";
+import AppContext, { user, logOut } from "./AppContext";
+
+import { fromJS } from "immutable";
+import { createStore } from "redux";
+import { Provider } from "react-redux";
+import uiReducer, { initialState } from "../reducers/uiReducer";
+
+const store = createStore(uiReducer, initialState);
 
 describe("<App />", () => {
+  beforeAll(() => {
+    StyleSheetTestUtils.suppressStyleInjection();
+  });
+  afterAll(() => {
+    StyleSheetTestUtils.clearBufferAndResumeStyleInjection();
+  });
+
   it("App renders without crashing", () => {
     const wrapper = shallow(<App />);
-    expect(wrapper).toBeDefined();
+    expect(wrapper.exists()).toEqual(true);
   });
-
-  it("App contains Header component", () => {
+  it("should contain the Notifications component", () => {
     const wrapper = shallow(<App />);
-    const component = wrapper.find(Header);
-    expect(component.exists()).toBe(true);
+    expect(wrapper.find("Notifications")).toHaveLength(1);
   });
 
-  it("App contains Login component", () => {
-    const wrapper = shallow(<App isLoggedIn={false} />);
-    const component = wrapper.find(Login);
-    expect(component.exists()).toBe(true);
-  });
-
-  it("App contains Footer component", () => {
+  it("should contain the Login component", () => {
     const wrapper = shallow(<App />);
-    const component = wrapper.find(Footer);
-    expect(component.exists()).toBe(true);
+    expect(wrapper.find("Login")).toHaveLength(1);
   });
 
-  window.alert = jest.fn();
-  it("test when ctrl and h keys are pressed", () => {
-    const mockfunc = jest.fn();
-    const wrapper = mount(<App logOut={mockfunc} />);
-    const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-    document.dispatchEvent(event);
-    expect(mockfunc).toHaveBeenCalled();
-    wrapper.unmount();
-  });
-  it("alert is called with the string Logging you out", () => {
-  const wrapper = mount(<App />);
-  const spy = jest.spyOn(window, "alert");
-  const event = new KeyboardEvent("keydown", { ctrlKey: true, key: "h" });
-  document.dispatchEvent(event);
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith("Logging you out");
-  wrapper.unmount();
+  it("CourseList is not displayed with isLoggedIn false by default", () => {
+    const wrapper = shallow(<App />);
+    expect(wrapper.find("CourseList")).toHaveLength(0);
   });
 
+  it("isLoggedIn is true", () => {
+    const wrapper = shallow(<App isLoggedIn={true} />);
+
+    expect(wrapper.find("Login")).toHaveLength(0);
+    expect(wrapper.find("CourseList")).toHaveLength(1);
+  });
+
+  it("verify that markNotificationAsRead works as intended", () => {
+    const wrapper = shallow(<App />);
+
+    const instance = wrapper.instance();
+
+    expect(wrapper.state().listNotifications).toEqual(
+      listNotificationsInitialState
+    );
+
+    instance.markNotificationAsRead(4);
+
+    expect(wrapper.state().listNotifications).toEqual(
+      listNotificationsInitialState
+    );
+
+    instance.markNotificationAsRead(3);
+
+    expect(wrapper.state().listNotifications).toEqual(
+      listNotificationsInitialState.slice(0, 2)
+    );
+
+    instance.markNotificationAsRead(1);
+
+    expect(wrapper.state().listNotifications).toEqual(
+      listNotificationsInitialState.slice(1, 2)
+    );
+  });
+});
+
+describe("App Redux", () => {
+  it("mapStateToProps returns the right object from user Login", () => {
+    let state = fromJS({
+      isUserLoggedIn: true,
+    });
+
+    const result = mapStateToProps(state);
+
+    expect(result).toEqual({ isLoggedIn: true });
+  });
+  it("mapStateToProps returns the right object from display Drawer", () => {
+    let state = fromJS({
+      isNotificationDrawerVisible: true,
+    });
+
+    const result = mapStateToProps(state);
+
+    expect(result).toEqual({ displayDrawer: true });
+  });
 });
